@@ -45,8 +45,11 @@ router.route("/sum/:x/:y")
 				res.json({ error: "Failed to parse " + req.params.y });
 			}
 			else {
-				var sum = x + y;
-				res.json({ sum : sum });
+				res.json({ 
+					x : x, 
+					y : y, 
+					sum : x + y
+				});
 			}			
 		}
 		catch (error) {
@@ -73,8 +76,11 @@ router.route("/difference/:minuend/:subtrahend")
 				res.json({ error: "Failed to parse " + req.params.minuend });
 			}
 			else {
-				var difference = minuend - subtrahend;
-				res.json({ difference : difference });
+				res.json({ 
+					minuend : minuend,
+					subtrahend : subtrahend,
+					difference : minuend - subtrahend
+				});
 			}			
 		}
 		catch (error) {
@@ -101,8 +107,11 @@ router.route("/product/:x/:y")
 				res.json({ error: "Failed to parse " + req.params.y });
 			}
 			else {
-				var product = x * y;
-				res.json({ product : product });
+				res.json({ 
+					x : x,
+					y : y, 
+					product : x * y 
+				});
 			}			
 		}
 		catch (error) {
@@ -132,13 +141,563 @@ router.route("/quotient/:dividend/:divisor")
 				res.json({ quotient: "undefined" });
 			}
 			else {
-				var quotient = dividend / divisor;
-				res.json({ quotient : quotient });
+				res.json({ 
+					dividend : dividend,
+					divisor : divisor,
+					quotient : dividend / divisor 
+				});
 			}			
 		}
 		catch (error) {
 			res.json({ error : error.message })
 		}
+	});
+
+// Solve For X
+//
+// examples: 
+//   http://localhost:8080/api/x/x=15-5
+//   http://localhost:8080/api/x/5x=10
+//   http://localhost:8080/api/x/2x=10+6
+//   http://localhost:8080/api/x/3x=6*8
+//   http://localhost:8080/api/x/4x=64%2F2
+//
+router.route("/x/:equation")
+
+	.get(function(req, res) {
+		
+		// get the input equation and replace URL encoding
+		var equation = req.params.equation;
+		equation = equation.replace("%2F", "/");
+		
+		var equationSides = equation.split("=");
+
+		// validate the equation
+		if (typeof equationSides == "undefined" ||
+			equationSides == null ||
+			equationSides.length != 2) {			
+			res.status(401).send("Invalid equation: " + equation);
+		}
+		
+		var coefficient = 1;
+		
+		if ("x" === equationSides[0]) {
+			// coefficient is already 1 and left-hand side is valid
+		}
+		else if (equationSides[0].indexOf("0") == 0) {
+			// divide by zero!
+			res.json({ x: "undefined" });
+		}
+		else {
+			coefficient = parseInt(equationSides[0]);
+
+			// make sure the only character after the coefficient is a lower-case x
+			if ("x" != equationSides[0].substring((coefficient+"").length)) {			
+				res.status(401).send("Expected x in monomial: " + equationSides[0]);
+			}
+		}
+		
+		if (equationSides[1].indexOf("+") > 0) {
+			
+			var monomials = equationSides[1].split("+");
+			var x = parseInt(monomials[0]);
+			var y = parseInt(monomials[1]);
+			
+			// find sum and quotient
+			
+			var http = require('http');
+			
+			var options = {
+			    host: 'localhost',
+			    port: 8080,
+			    method: 'GET',
+				path: '/api/sum/' + x + '/' + y
+			};
+			
+			http.get(options, function(responseSum) {
+				
+				var responseBody = "";
+				
+				responseSum.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseSum.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+				    var sum = parsed.sum;
+
+				    options = {
+						host: 'localhost',
+						port: 8080,
+						method: 'GET',
+					    path: '/api/quotient/' + sum + '/' + coefficient
+					};
+						
+					http.get(options, function(responseQuotient) {
+							
+						responseBody = "";
+							
+						responseQuotient.on("data", function(chunk) {
+							responseBody += chunk;
+						});
+
+						responseQuotient.on("end", function() {
+							parsed = JSON.parse(responseBody);				    
+							res.json({ x : parsed.quotient });
+						});
+					});
+				});
+			});
+		}
+		else if (equationSides[1].indexOf("-") > 0) {
+			
+			var monomials = equationSides[1].split("-");
+			var minuend = parseInt(monomials[0]);
+			var subtrahend = parseInt(monomials[1]);
+			
+			// find difference and quotient
+			
+			var http = require('http');
+			
+			var options = {
+			    host: 'localhost',
+			    port: 8080,
+			    method: 'GET',
+				path: '/api/difference/' + minuend + '/' + subtrahend
+			};
+			
+			http.get(options, function(responseDiff) {
+				
+				var responseBody = "";
+				
+				responseDiff.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseDiff.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+				    var difference = parsed.difference;
+
+				    options = {
+						host: 'localhost',
+						port: 8080,
+						method: 'GET',
+					    path: '/api/quotient/' + difference + '/' + coefficient
+					};
+						
+					http.get(options, function(responseQuotient) {
+							
+						responseBody = "";
+							
+						responseQuotient.on("data", function(chunk) {
+							responseBody += chunk;
+						});
+
+						responseQuotient.on("end", function() {
+							parsed = JSON.parse(responseBody);				    
+							res.json({ x : parsed.quotient });
+						});
+					});
+				});
+			});
+		}
+		else if (equationSides[1].indexOf("*") > 0) {
+			
+			var monomials = equationSides[1].split("*");
+			var x = parseInt(monomials[0]);
+			var y = parseInt(monomials[1]);
+			
+			// find product and quotient
+			
+			var http = require('http');
+			
+			var options = {
+			    host: 'localhost',
+			    port: 8080,
+			    method: 'GET',
+				path: '/api/product/' + x + '/' + y
+			};
+			
+			http.get(options, function(responseProduct) {
+				
+				var responseBody = "";
+				
+				responseProduct.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseProduct.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+				    var product = parsed.product;
+
+				    options = {
+						host: 'localhost',
+						port: 8080,
+						method: 'GET',
+					    path: '/api/quotient/' + product + '/' + coefficient
+					};
+						
+					http.get(options, function(responseQuotient) {
+							
+						responseBody = "";
+							
+						responseQuotient.on("data", function(chunk) {
+							responseBody += chunk;
+						});
+
+						responseQuotient.on("end", function() {
+							parsed = JSON.parse(responseBody);				    
+							res.json({ x : parsed.quotient });
+						});
+					});
+				});
+			});
+		}
+		else if (equationSides[1].indexOf("/") > 0) {
+			
+			var monomials = equationSides[1].split("/");
+			var dividend = parseInt(monomials[0]);
+			var divisor = parseInt(monomials[1]);
+			
+			// find quotient and quotient	
+			
+			var http = require('http');
+			
+			var options = {
+			    host: 'localhost',
+			    port: 8080,
+			    method: 'GET',
+				path: '/api/quotient/' + dividend + '/' + divisor
+			};
+			
+			http.get(options, function(responseQuotient) {
+				
+				var responseBody = "";
+				
+				responseQuotient.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseQuotient.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+				    var quotient = parsed.quotient;
+				    
+				    if (quotient === "undefined") {
+				    	res.json({ x : "undefined" });
+				    }
+				    else {
+				    	options = {
+							host: 'localhost',
+							port: 8080,
+							method: 'GET',
+							path: '/api/quotient/' + quotient + '/' + coefficient
+						};
+								
+						http.get(options, function(responseQuotient) {
+									
+							responseBody = "";
+									
+							responseQuotient.on("data", function(chunk) {
+								responseBody += chunk;
+							});
+
+							responseQuotient.on("end", function() {
+								parsed = JSON.parse(responseBody);				    
+								res.json({ x : parsed.quotient });
+							});
+						});
+				    }
+				    
+				});
+			});
+		}
+		else {
+			var monomial = parseInt(equationSides[1]);
+
+			// find quotient
+			
+			var http = require('http');
+			
+			var options = {
+			    host: 'localhost',
+			    port: 8080,
+			    method: 'GET',
+				path: '/api/quotient/' + monomial + '/' + coefficient
+			};
+			
+			http.get(options, function(resQuotient) {
+				
+				var responseBody = "";
+				
+				resQuotient.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				resQuotient.on("end", function() {
+				    var parsed = JSON.parse(responseBody);				    
+				    res.json({ x : parsed.quotient });
+				});
+			});
+		}		
+	});
+
+// test the addition function
+// http://localhost:8080/api/sumTest
+router.route("/sumTest")
+
+	.get(function(req, res) {
+		
+		var http = require('http');
+		var testMaxCount = 20;
+		var testResponseCount = 0;
+
+		for (var i = 0; i < testMaxCount; i++) {
+			
+			var x = parseInt(Math.random()*20);
+			var y = parseInt(Math.random()*20);
+			
+			var options = {
+				host: 'localhost',
+				port: 8080,
+				method: 'GET',
+			    path: '/api/sum/' + x + '/' + y
+			};
+			
+			var errorMessage = "";
+			
+			http.get(options, function(responseSum) {
+				
+				var responseBody = "";
+				
+				responseSum.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseSum.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+
+				    if (parseInt(parsed.x) + parseInt(parsed.y) != parseInt(parsed.sum)) {
+
+				    	// build error message of all bad results
+				    	if (errorMessage != "") {
+				    		errorMessage += "; ";
+				    	}
+				    	
+				    	errorMessage += parsed.x + " + " + parsed.y + " != " + parsed.sum;
+				    }
+				    
+				    testResponseCount++;
+
+				    // after the final test, set the HTTP response
+				    if (testResponseCount == testMaxCount - 1) {
+				    	if (errorMessage == "") {
+				    		res.json({ success : true });
+				    	}
+				    	else {
+				    		res.json({ error : errorMessage });
+				    	}
+				    }
+				});
+			});
+		}
+	});
+
+// test the subtraction function
+// http://localhost:8080/api/differenceTest
+router.route("/differenceTest")
+
+	.get(function(req, res) {
+		
+		var http = require('http');
+		var testMaxCount = 20;
+		var testResponseCount = 0;
+
+		for (var i = 0; i < testMaxCount; i++) {
+			
+			var subtrahend = parseInt(Math.random()*20);
+			var minuend = subtrahend + parseInt(Math.random()*20);			
+			
+			var options = {
+				host: 'localhost',
+				port: 8080,
+				method: 'GET',
+			    path: '/api/difference/' + minuend + '/' + subtrahend
+			};
+			
+			var errorMessage = "";
+			
+			http.get(options, function(responseSum) {
+				
+				var responseBody = "";
+				
+				responseSum.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseSum.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+
+				    if (parseInt(parsed.minuend) - parseInt(parsed.subtrahend) !=  
+				    	parseInt(parsed.difference)) {
+
+				    	// build error message of all bad results
+				    	if (errorMessage != "") {
+				    		errorMessage += "; ";
+				    	}
+				    	
+				    	errorMessage += parsed.minuend + " - " + 
+				    		parsed.subtrahend + " != " + 
+				    		parsed.difference;
+				    }
+				    
+				    testResponseCount++;
+
+				    // after the final test, set the HTTP response
+				    if (testResponseCount == testMaxCount - 1) {
+				    	if (errorMessage == "") {
+				    		res.json({ success : true });
+				    	}
+				    	else {
+				    		res.json({ error : errorMessage });
+				    	}
+				    }
+				});
+			});
+		}		
+	});
+
+// test the multiplication function
+// http://localhost:8080/api/productTest
+router.route("/productTest")
+
+	.get(function(req, res) {
+		
+		var http = require('http');
+		var testMaxCount = 20;
+		var testResponseCount = 0;
+
+		for (var i = 0; i < testMaxCount; i++) {
+			
+			var x = parseInt(Math.random()*20);
+			var y = parseInt(Math.random()*20);
+			
+			var options = {
+				host: 'localhost',
+				port: 8080,
+				method: 'GET',
+			    path: '/api/product/' + x + '/' + y
+			};
+			
+			var errorMessage = "";
+			
+			http.get(options, function(responseSum) {
+				
+				var responseBody = "";
+				
+				responseSum.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseSum.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+
+				    if (parseInt(parsed.x) * parseInt(parsed.y) != 
+				    	parseInt(parsed.product)) {
+
+				    	// build error message of all bad results
+				    	if (errorMessage != "") {
+				    		errorMessage += "; ";
+				    	}
+				    	
+				    	errorMessage += parsed.x + " * " + parsed.y + " != " + parsed.product;
+				    }
+				    
+				    testResponseCount++;
+
+				    // after the final test, set the HTTP response
+				    if (testResponseCount == testMaxCount - 1) {
+				    	if (errorMessage == "") {
+				    		res.json({ success : true });
+				    	}
+				    	else {
+				    		res.json({ error : errorMessage });
+				    	}
+				    }
+				});
+			});
+		}		
+	});
+
+// test the division function
+// http://localhost:8080/api/quotientTest
+router.route("/quotientTest")
+
+	.get(function(req, res) {
+		
+		var http = require('http');
+		var testMaxCount = 20;
+		var testResponseCount = 0;
+
+		for (var i = 0; i < testMaxCount; i++) {
+			
+			var divisor = parseInt(Math.random()*10+1);
+			var dividend = divisor * parseInt(Math.random()*20+1);
+			
+			var options = {
+				host: 'localhost',
+				port: 8080,
+				method: 'GET',
+			    path: '/api/quotient/' + dividend + '/' + divisor
+			};
+			
+			var errorMessage = "";
+			
+			http.get(options, function(responseSum) {
+				
+				var responseBody = "";
+				
+				responseSum.on("data", function(chunk) {
+					responseBody += chunk;
+				});
+				
+				responseSum.on("end", function() {
+
+				    var parsed = JSON.parse(responseBody);
+
+				    if (parseInt(parsed.dividend) / parseInt(parsed.divisor) != 
+				    	parseInt(parsed.quotient)) {
+
+				    	// build error message of all bad results
+				    	if (errorMessage != "") {
+				    		errorMessage += "; ";
+				    	}
+				    	
+				    	errorMessage += parsed.dividend + " / " + 
+				    		parsed.divisor + " != " + 
+				    		parsed.quotient;
+				    }
+				    
+				    testResponseCount++;
+
+				    // after the final test, set the HTTP response
+				    if (testResponseCount == testMaxCount - 1) {
+				    	if (errorMessage == "") {
+				    		res.json({ success : true });
+				    	}
+				    	else {
+				    		res.json({ error : errorMessage });
+				    	}
+				    }
+				});
+			});
+		}		
 	});
 
 // REGISTER OUR ROUTES -------------------------------
