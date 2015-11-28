@@ -21,7 +21,7 @@ var router = express.Router();              // get an instance of the express Ro
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
-    res.json({ message: 'hooray! welcome to our api!' });   
+    res.json({ "message": "Listening on port " + port });   
 });
 
 // more routes for our API will happen here
@@ -38,22 +38,22 @@ router.route("/sum/:x/:y")
 			
 			if (x == null || isNaN(x) ||
 				(x+"").length < req.params.x.length) {
-				res.json({ error: "Failed to parse " + req.params.x });
+				res.json({ "error": "Failed to parse " + req.params.x });
 			}
 			else if (y == null || isNaN(y) ||
 					(y+"").length < req.params.y.length) {
-				res.json({ error: "Failed to parse " + req.params.y });
+				res.json({ "error": "Failed to parse " + req.params.y });
 			}
 			else {
 				res.json({ 
-					x : x, 
-					y : y, 
-					sum : x + y
+					"x" : x, 
+					"y" : y, 
+					"sum" : x + y
 				});
 			}			
 		}
 		catch (error) {
-			res.json({ error : error.message })
+			res.json({ "error" : error.message })
 		}
 	});
 
@@ -69,22 +69,22 @@ router.route("/difference/:minuend/:subtrahend")
 			
 			if (minuend == null || isNaN(minuend) ||
 			   (minuend+"").length < req.params.minuend.length) {
-				res.json({ error: "Failed to parse " + req.params.minuend });
+				res.json({ "error": "Failed to parse " + req.params.minuend });
 			}
 			else if (subtrahend == null || isNaN(subtrahend) ||
 				    (subtrahend+"").length < req.params.minuend.subtrahend) {
-				res.json({ error: "Failed to parse " + req.params.minuend });
+				res.json({ "error": "Failed to parse " + req.params.minuend });
 			}
 			else {
 				res.json({ 
-					minuend : minuend,
-					subtrahend : subtrahend,
-					difference : minuend - subtrahend
+					"minuend" : minuend,
+					"subtrahend" : subtrahend,
+					"difference" : minuend - subtrahend
 				});
 			}			
 		}
 		catch (error) {
-			res.json({ error : error.message })
+			res.json({ "error" : error.message })
 		}
 	});
 
@@ -100,22 +100,22 @@ router.route("/product/:x/:y")
 			
 			if (x == null || isNaN(x) ||
 		       (x+"").length < req.params.x.length) {
-				res.json({ error: "Failed to parse " + req.params.x });
+				res.json({ "error": "Failed to parse " + req.params.x });
 			}
 			else if (y == null || isNaN(y) ||
 					(y+"").length < req.params.y.length) {
-				res.json({ error: "Failed to parse " + req.params.y });
+				res.json({ "error": "Failed to parse " + req.params.y });
 			}
 			else {
 				res.json({ 
-					x : x,
-					y : y, 
-					product : x * y 
+					"x" : x,
+					"y" : y, 
+					"product" : x * y 
 				});
 			}			
 		}
 		catch (error) {
-			res.json({ error : error.message })
+			res.json({ "error" : error.message })
 		}
 	});
 
@@ -131,25 +131,25 @@ router.route("/quotient/:dividend/:divisor")
 			
 			if (dividend == null || isNaN(dividend) ||
 			   (dividend+"").length < req.params.dividend.length) {
-				res.json({ error: "Failed to parse " + req.params.dividend });
+				res.json({ "error": "Failed to parse " + req.params.dividend });
 			}
 			else if (divisor == null || isNaN(divisor) ||
 				    (divisor+"").length < req.params.divisor.length) {
-				res.json({ error: "Failed to parse " + req.params.divisor });
+				res.json({ "error": "Failed to parse " + req.params.divisor });
 			}
 			else if (divisor == 0) {
-				res.json({ quotient: "undefined" });
+				res.json({ "quotient": "undefined" });
 			}
 			else {
 				res.json({ 
-					dividend : dividend,
-					divisor : divisor,
-					quotient : dividend / divisor 
+					"dividend" : dividend,
+					"divisor" : divisor,
+					"quotient" : dividend / divisor 
 				});
 			}			
 		}
 		catch (error) {
-			res.json({ error : error.message })
+			res.json({ "error" : error.message })
 		}
 	});
 
@@ -244,7 +244,7 @@ router.route("/x/:equation")
 
 						responseQuotient.on("end", function() {
 							parsed = JSON.parse(responseBody);				    
-							res.json({ x : parsed.quotient });
+							res.json({ "x" : parsed.quotient });
 						});
 					});
 				});
@@ -297,7 +297,7 @@ router.route("/x/:equation")
 
 						responseQuotient.on("end", function() {
 							parsed = JSON.parse(responseBody);				    
-							res.json({ x : parsed.quotient });
+							res.json({ "x" : parsed.quotient });
 						});
 					});
 				});
@@ -350,7 +350,7 @@ router.route("/x/:equation")
 
 						responseQuotient.on("end", function() {
 							parsed = JSON.parse(responseBody);				    
-							res.json({ x : parsed.quotient });
+							res.json({ "x" : parsed.quotient });
 						});
 					});
 				});
@@ -387,7 +387,7 @@ router.route("/x/:equation")
 				    var quotient = parsed.quotient;
 				    
 				    if (quotient === "undefined") {
-				    	res.json({ x : "undefined" });
+				    	res.json({ "x" : "undefined" });
 				    }
 				    else {
 				    	options = {
@@ -407,7 +407,7 @@ router.route("/x/:equation")
 
 							responseQuotient.on("end", function() {
 								parsed = JSON.parse(responseBody);				    
-								res.json({ x : parsed.quotient });
+								res.json({ "x" : parsed.quotient });
 							});
 						});
 				    }
@@ -439,7 +439,7 @@ router.route("/x/:equation")
 				
 				resQuotient.on("end", function() {
 				    var parsed = JSON.parse(responseBody);				    
-				    res.json({ x : parsed.quotient });
+				    res.json({ "x" : parsed.quotient });
 				});
 			});
 		}		
@@ -496,10 +496,10 @@ router.route("/sumTest")
 				    // after the final test, set the HTTP response
 				    if (testResponseCount == testMaxCount - 1) {
 				    	if (errorMessage == "") {
-				    		res.json({ success : true });
+				    		res.json({ "success" : true });
 				    	}
 				    	else {
-				    		res.json({ error : errorMessage });
+				    		res.json({ "error" : errorMessage });
 				    	}
 				    }
 				});
@@ -561,10 +561,10 @@ router.route("/differenceTest")
 				    // after the final test, set the HTTP response
 				    if (testResponseCount == testMaxCount - 1) {
 				    	if (errorMessage == "") {
-				    		res.json({ success : true });
+				    		res.json({ "success" : true });
 				    	}
 				    	else {
-				    		res.json({ error : errorMessage });
+				    		res.json({ "error" : errorMessage });
 				    	}
 				    }
 				});
@@ -624,10 +624,10 @@ router.route("/productTest")
 				    // after the final test, set the HTTP response
 				    if (testResponseCount == testMaxCount - 1) {
 				    	if (errorMessage == "") {
-				    		res.json({ success : true });
+				    		res.json({ "success" : true });
 				    	}
 				    	else {
-				    		res.json({ error : errorMessage });
+				    		res.json({ "error" : errorMessage });
 				    	}
 				    }
 				});
@@ -689,10 +689,10 @@ router.route("/quotientTest")
 				    // after the final test, set the HTTP response
 				    if (testResponseCount == testMaxCount - 1) {
 				    	if (errorMessage == "") {
-				    		res.json({ success : true });
+				    		res.json({ "success" : true });
 				    	}
 				    	else {
-				    		res.json({ error : errorMessage });
+				    		res.json({ "error" : errorMessage });
 				    	}
 				    }
 				});
